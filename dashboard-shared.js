@@ -88,23 +88,90 @@ function countMulti(rows, field) {
   return counts;
 }
 
-function buildAmenityBars(containerId, counts, total, labelMap) {
+// ── Treemap renderer using D3 ──────────────────────────────────────
+function buildTreemap(containerId, counts, total, labelMap, colorPalette) {
   const container = document.getElementById(containerId);
-  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  sorted.forEach(([key, val]) => {
-    const label = labelMap[key] || key;
-    const pct = total > 0 ? Math.round(val / total * 100) : 0;
-    const row = document.createElement('div');
-    row.className = 'amenity-row';
-    row.innerHTML = `
-      <span class="amenity-name">${label}</span>
-      <div class="amenity-bar-bg"><div class="amenity-bar-fill" style="width:0%" data-pct="${pct}%"></div></div>
-      <span class="amenity-pct">${val} (${pct}%)</span>`;
-    container.appendChild(row);
-  });
-  setTimeout(() => {
-    container.querySelectorAll('.amenity-bar-fill').forEach(b => b.style.width = b.dataset.pct);
-  }, 200);
+  if (!container) return;
+  container.innerHTML = ''; // clear
+
+  const entries = Object.entries(counts)
+    .filter(([,v]) => v > 0)
+    .sort((a, b) => b[1] - a[1]);
+
+  if (entries.length === 0) {
+    container.innerHTML = '<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No data yet</p>';
+    return;
+  }
+
+  // Build D3 hierarchy
+  const root = d3.hierarchy({ children: entries.map(([key, val]) => ({ key, val })) })
+    .sum(d => d.val)
+    .sort((a, b) => b.value - a.value);
+
+  // Responsive width
+  const W = container.clientWidth || 600;
+  const H = Math.max(220, Math.min(320, W * 0.5));
+  container.style.height = H + 'px';
+  container.style.position = 'relative';
+
+  d3.treemap().size([W, H]).padding(3).round(true)(root);
+
+  const svg = d3.select(container).append('svg')
+    .attr('width', W).attr('height', H)
+    .style('display', 'block');
+
+  const cell = svg.selectAll('g')
+    .data(root.leaves())
+    .enter().append('g')
+    .attr('transform', d => `translate(${d.x0},${d.y0})`);
+
+  cell.append('rect')
+    .attr('width', d => Math.max(0, d.x1 - d.x0))
+    .attr('height', d => Math.max(0, d.y1 - d.y0))
+    .attr('rx', 5).attr('ry', 5)
+    .attr('fill', (d, i) => colorPalette[i % colorPalette.length])
+    .attr('opacity', 0.88)
+    .on('mouseover', function() { d3.select(this).attr('opacity', 1); })
+    .on('mouseout',  function() { d3.select(this).attr('opacity', 0.88); });
+
+  cell.append('text')
+    .attr('x', 7).attr('y', 16)
+    .style('font-size', d => {
+      const w = d.x1 - d.x0;
+      return w < 80 ? '9px' : w < 130 ? '10px' : '11px';
+    })
+    .style('font-weight', '700')
+    .style('fill', 'white')
+    .style('pointer-events', 'none')
+    .text(d => {
+      const w = d.x1 - d.x0;
+      const label = labelMap[d.data.key] || d.data.key;
+      return w < 50 ? '' : label;
+    });
+
+  cell.append('text')
+    .attr('x', 7).attr('y', d => {
+      const h = d.y1 - d.y0;
+      return h > 32 ? 30 : 28;
+    })
+    .style('font-size', '10px')
+    .style('fill', 'rgba(255,255,255,0.85)')
+    .style('pointer-events', 'none')
+    .text(d => {
+      const w = d.x1 - d.x0;
+      const h = d.y1 - d.y0;
+      if (w < 50 || h < 28) return '';
+      const pct = total > 0 ? Math.round(d.data.val / total * 100) : 0;
+      return `${d.data.val} (${pct}%)`;
+    });
+
+  // Tooltip on title
+  cell.append('title')
+    .text(d => {
+      const label = labelMap[d.data.key] || d.data.key;
+      const pct = total > 0 ? Math.round(d.data.val / total * 100) : 0;
+      return `${label}: ${d.data.val} owners (${pct}%)`;
+    });
 }
 
 function buildBlockGrid(respondedFlats) {
@@ -289,13 +356,15 @@ function renderAll(data) {
   const heightLabels = { 'g+4':'G+4 Low-rise','g+7':'G+7 Mid-rise','g+12':'G+12–15 High-rise','norm':'Per CMDA Norms' };
   makeBar('chartHeight', heightOrder.map(k => heightLabels[k]), heightOrder.map(k => hc[k] || 0), true);
 
-  // Physical infra
-  const physMap = { covered_parking:'Covered Car Parking',ev_charging:'EV Charging',visitor_parking:'Visitor Parking',cycle_stand:'Cycle Stand',solar:'Solar Panels',rwh:'Rainwater Harvesting',stp:'STP & Grey Water Reuse',solid_waste:'Solid Waste Mgmt',dg_backup:'DG Backup',cctv:'24×7 CCTV',intercom:'Video Door Phone',access_ctrl:'Boom Barrier',fire_sys:'Fire Detection' };
-  buildAmenityBars('physicalBars', cntM('Q7 — Physical Infrastructure'), n, physMap);
+  // Physical infra — teal-blue palette
+  const physMap = { covered_parking:'Covered Car Parking',ev_charging:'EV Charging',visitor_parking:'Visitor Parking',cycle_stand:'Cycle Stand',solar:'Solar Panels',rwh:'Rainwater Harvesting',stp:'STP & Grey Water',solid_waste:'Solid Waste Mgmt',dg_backup:'DG Backup',cctv:'24×7 CCTV',intercom:'Video Door Phone',access_ctrl:'Boom Barrier',fire_sys:'Fire Detection' };
+  const physPalette = ['#1c4e6e','#1a6b8a','#1e82a3','#2498bb','#2aadd0','#32bfe0','#1d6b5c','#207a69','#238b78','#279c88'];
+  buildTreemap('physicalBars', cntM('Q7 — Physical Infrastructure'), n, physMap, physPalette);
 
-  // Social infra
-  const socialMap = { gym:'Gymnasium',jogging:'Jogging Track',yoga:'Yoga/Meditation Deck',swimming:'Swimming Pool',clubhouse:'Community Hall',temple:'Temple/Prayer Room',library:'Mini Library',cowork:'Co-working Space',play_area:"Children's Play Area",senior_zone:'Senior Citizen Area',daycare:'Crèche/Day-care' };
-  buildAmenityBars('socialBars', cntM('Q8 — Social Infrastructure'), n, socialMap);
+  // Social infra — warm saffron-amber palette
+  const socialMap = { gym:'Gymnasium',jogging:'Jogging Track',yoga:'Yoga / Meditation',swimming:'Swimming Pool',clubhouse:'Community Hall',temple:'Temple / Prayer Room',library:'Mini Library',cowork:'Co-working Space',play_area:"Children's Play Area",senior_zone:'Senior Citizen Area',daycare:'Crèche / Day-care' };
+  const socialPalette = ['#7b3500','#9a4400','#b85300','#d46212','#e07b39','#e99060','#c45c00','#a84e00','#8c4000','#d4780a'];
+  buildTreemap('socialBars', cntM('Q8 — Social Infrastructure'), n, socialMap, socialPalette);
 
   // Members
   const mc = cnt('Q10 — New Members Willing to Add');
@@ -304,8 +373,8 @@ function renderAll(data) {
 
   // Rent allowance
   const rc = cnt('Q12 — Min. Rent Allowance (₹)');
-  const rentOrder  = ['<20k','20-30k','30-50k','>50k','na'];
-  const rentLabels = { '<20k':'< ₹20K','20-30k':'₹20–30K','30-50k':'₹30–50K','>50k':'> ₹50K','na':'Not Applicable' };
+  const rentOrder  = ['<20k','20-30k','30-50k','>50k'];
+  const rentLabels = { '<20k':'< ₹20K','20-30k':'₹20–30K','30-50k':'₹30–50K','>50k':'> ₹50K' };
   makeBar('chartRent', rentOrder.map(k => rentLabels[k]), rentOrder.map(k => rc[k] || 0));
 
   // Developer

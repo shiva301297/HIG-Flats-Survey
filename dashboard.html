@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -159,19 +160,8 @@ footer strong{color:rgba(255,255,255,0.7)}
   <!-- All charts (hidden until 80%) -->
   <div id="allCharts" style="display:none">
 
-  <!-- PARKING -->
-  <div class="sec-hd">
-    <h2>🚗 Parking Demand Summary</h2>
-    <p>Average slots per responding flat — indicative until all responses are received</p>
-  </div>
-  <div class="sec-divider"></div>
-  <div class="parking-grid" id="parkingTotals" style="margin-bottom:12px"></div>
-  <div style="background:#fff8f0;border:1.5px solid rgba(224,123,57,0.3);border-radius:8px;padding:12px 16px;margin-bottom:36px;font-size:12px;color:var(--muted);line-height:1.6">
-    ⚠️ <strong>Disclaimer:</strong> Averages are indicative based on responses received so far. Final allocation will be confirmed once all 138 responses are submitted.
-  </div>
-
-  <!-- UNIT PREFERENCES -->
-  <div class="sec-hd"><h2>🏠 Unit & Usage Preferences</h2><p>What owners envision for their redeveloped flat</p></div>
+  <!-- Q1-Q4: UNIT PREFERENCES -->
+  <div class="sec-hd"><h2>🏠 Unit & Usage Preferences</h2><p>Q1–Q4 · What owners envision for their redeveloped flat</p></div>
   <div class="sec-divider"></div>
   <div class="chart-grid">
     <div class="chart-card"><h3>Post-Redevelopment Intent</h3><p>How owners plan to use their flat</p><div class="chart-wrap"><canvas id="chartIntent"></canvas></div></div>
@@ -180,7 +170,7 @@ footer strong{color:rgba(255,255,255,0.7)}
     <div class="chart-card"><h3>BHK Preference</h3><p>2 BHK vs. 3 BHK vs. 4 BHK demand</p><div class="chart-wrap"><canvas id="chartBhk"></canvas></div></div>
   </div>
 
-  <!-- CORRELATION -->
+  <!-- Q3xQ4: CORRELATION -->
   <div class="sec-hd" style="margin-top:36px"><h2>🔗 Carpet Area ↔ BHK Correlation</h2><p>How sq.ft. preferences align with BHK choices</p></div>
   <div class="sec-divider"></div>
   <div class="chart-grid">
@@ -191,35 +181,43 @@ footer strong{color:rgba(255,255,255,0.7)}
     <div id="insightsList" style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--muted);line-height:1.6"></div>
   </div>
 
-  <!-- COMMUNITY DESIGN -->
-  <div class="sec-hd"><h2>🌿 Community Design Preferences</h2><p>Greenery priority and building height preference</p></div>
+  <!-- Q5: PARKING -->
+  <div class="sec-hd"><h2>🚗 Parking Demand Summary</h2><p>Q5 · Average slots per responding flat — indicative until all responses are received</p></div>
+  <div class="sec-divider"></div>
+  <div class="parking-grid" id="parkingTotals" style="margin-bottom:12px"></div>
+  <div style="background:#fff8f0;border:1.5px solid rgba(224,123,57,0.3);border-radius:8px;padding:12px 16px;margin-bottom:36px;font-size:12px;color:var(--muted);line-height:1.6">
+    ⚠️ <strong>Disclaimer:</strong> Averages are indicative based on responses received so far. Final allocation will be confirmed once all 138 responses are submitted.
+  </div>
+
+  <!-- Q6, Q9: COMMUNITY DESIGN -->
+  <div class="sec-hd"><h2>🌿 Community Design Preferences</h2><p>Q6 & Q9 · Greenery priority and building height preference</p></div>
   <div class="sec-divider"></div>
   <div class="chart-grid">
     <div class="chart-card"><h3>Greenery & Landscaping</h3><p>Owner stance on trees and green corridors</p><div class="chart-wrap"><canvas id="chartGreen"></canvas></div></div>
     <div class="chart-card"><h3>Building Height Preference</h3><p>Low-rise vs. mid-rise vs. high-rise</p><div class="chart-wrap"><canvas id="chartHeight"></canvas></div></div>
   </div>
 
-  <!-- AMENITIES -->
-  <div class="sec-hd" style="margin-top:36px"><h2>🏗️ Physical Infrastructure Demand</h2><p>% of responding owners who selected each amenity</p></div>
+  <!-- Q7, Q8: AMENITIES -->
+  <div class="sec-hd" style="margin-top:36px"><h2>🏗️ Physical Infrastructure Demand</h2><p>Q7 · % of responding owners who selected each amenity</p></div>
   <div class="sec-divider"></div>
-  <div class="chart-card" style="margin-bottom:28px"><div class="amenity-list" id="physicalBars"></div></div>
+  <div class="chart-card" style="margin-bottom:28px;padding:16px"><p style="font-size:11px;color:var(--muted);margin-bottom:12px">Hover over tiles for details · Size = number of owners who selected the amenity</p><div id="physicalBars"></div></div>
 
-  <div class="sec-hd"><h2>👨‍👩‍👧 Social Infrastructure Demand</h2><p>% of responding owners who selected each facility</p></div>
+  <div class="sec-hd"><h2>👨‍👩‍👧 Social Infrastructure Demand</h2><p>Q8 · % of responding owners who selected each facility</p></div>
   <div class="sec-divider"></div>
-  <div class="chart-card" style="margin-bottom:36px"><div class="amenity-list" id="socialBars"></div></div>
+  <div class="chart-card" style="margin-bottom:36px;padding:16px"><p style="font-size:11px;color:var(--muted);margin-bottom:12px">Hover over tiles for details · Size = number of owners who selected the facility</p><div id="socialBars"></div></div>
 
-  <!-- GOVERNANCE -->
-  <div class="sec-hd"><h2>🏛️ Governance & Financial Preferences</h2><p>Association structure, rent allowance and developer priorities</p></div>
+  <!-- Q10-Q13: GOVERNANCE -->
+  <div class="sec-hd"><h2>🏛️ Governance & Financial Preferences</h2><p>Q10–Q13 · Association structure, rent allowance and developer priorities</p></div>
   <div class="sec-divider"></div>
   <div class="chart-grid">
-    <div class="chart-card"><h3>New Members to Association</h3><p>How many new members owners are willing to add</p><div class="chart-wrap"><canvas id="chartMembers"></canvas></div></div>
-    <div class="chart-card"><h3>Min. Monthly Rent Allowance (₹)</h3><p>If required to vacate during construction</p><div class="chart-wrap"><canvas id="chartRent"></canvas></div></div>
-    <div class="chart-card"><h3>Developer Selection Priority</h3><p>Top factors (multi-select, max 2)</p><div class="chart-wrap tall"><canvas id="chartDev"></canvas></div></div>
-    <div class="chart-card"><h3>Acceptable Project Timeline</h3><p>Agreement to possession — owner expectations</p><div class="chart-wrap"><canvas id="chartTimeline"></canvas></div></div>
+    <div class="chart-card"><h3>New Members to Association</h3><p>Q10 · How many new members owners are willing to add</p><div class="chart-wrap"><canvas id="chartMembers"></canvas></div></div>
+    <div class="chart-card"><h3>Min. Monthly Rent Allowance (₹)</h3><p>Q11 · If required to vacate during construction</p><div class="chart-wrap"><canvas id="chartRent"></canvas></div></div>
+    <div class="chart-card"><h3>Developer Selection Priority</h3><p>Q12 · Top factors (multi-select, max 2)</p><div class="chart-wrap tall"><canvas id="chartDev"></canvas></div></div>
+    <div class="chart-card"><h3>Acceptable Project Timeline</h3><p>Q13 · Agreement to possession — owner expectations</p><div class="chart-wrap"><canvas id="chartTimeline"></canvas></div></div>
   </div>
 
-  <!-- SUPPORT -->
-  <div class="sec-hd" style="margin-top:36px"><h2>📊 Redevelopment Support Level</h2><p>Average score on a 1–5 scale from all responding owners</p></div>
+  <!-- Q14: SUPPORT -->
+  <div class="sec-hd" style="margin-top:36px"><h2>📊 Redevelopment Support Level</h2><p>Q14 · Average score on a 1–5 scale from all responding owners</p></div>
   <div class="sec-divider"></div>
   <div class="chart-card" style="max-width:400px;margin:0 auto 40px">
     <div class="support-meter">
