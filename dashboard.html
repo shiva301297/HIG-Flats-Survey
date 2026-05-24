@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>HIG Flats — Community Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --saffron:#e07b39;--saffron-light:#f5a96a;
+  --deep:#1c2b3a;--teal:#2a7f6f;--teal-light:#e6f4f1;
+  --cream:#fdf8f3;--border:#e8ddd0;--muted:#7a7060;
+  --card:#ffffff;--green:#27ae60;--red:#e74c3c;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--deep);min-height:100vh}
+
+/* NAV */
+.topbar{background:var(--deep);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.topbar-logo{display:flex;align-items:center;gap:10px;color:var(--saffron-light);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+.topbar-logo svg{width:20px;height:20px;fill:var(--saffron)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.btn-back{background:transparent;border:1px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.7);font-family:'Nunito',sans-serif;font-size:12px;font-weight:600;padding:6px 16px;border-radius:20px;cursor:pointer;text-decoration:none;transition:all 0.2s}
+.btn-back:hover{border-color:var(--saffron);color:var(--saffron-light)}
+.last-refresh{font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:0.5px}
+
+/* HERO STRIP */
+.dash-hero{
+  background:linear-gradient(135deg,var(--deep) 0%,#243b55 100%);
+  color:white;padding:36px 28px 44px;text-align:center;position:relative;overflow:hidden;
+}
+.dash-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 30% 50%,rgba(224,123,57,0.12) 0%,transparent 60%)}
+.dash-hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(24px,4vw,42px);font-weight:700;position:relative}
+.dash-hero h1 em{color:var(--saffron);font-style:normal}
+.dash-hero p{font-size:13px;color:rgba(255,255,255,0.5);margin-top:6px;letter-spacing:1px;text-transform:uppercase;position:relative}
+.dash-arch{position:absolute;bottom:-1px;left:0;right:0;height:40px;background:var(--cream);clip-path:ellipse(55% 100% at 50% 100%)}
+
+/* LOADING */
+.loading-screen{text-align:center;padding:80px 24px}
+.spinner{width:44px;height:44px;border:4px solid var(--border);border-top-color:var(--saffron);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-screen p{color:var(--muted);font-size:14px}
+
+/* WRAPPER */
+.dash-wrap{max-width:1100px;margin:0 auto;padding:40px 20px 80px}
+
+/* ── STAT CARDS ── */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:36px}
+.stat-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:20px 18px;text-align:center}
+.stat-card .sv{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:700;color:var(--saffron);line-height:1}
+.stat-card .sl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:6px}
+.stat-card .sp{font-size:12px;color:var(--teal);font-weight:600;margin-top:4px}
+.stat-card.highlight{border-color:var(--teal);background:var(--teal-light)}
+.stat-card.highlight .sv{color:var(--teal)}
+
+/* ── SECTION HEADERS ── */
+.sec-hd{margin:36px 0 18px}
+.sec-hd h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--deep)}
+.sec-hd p{font-size:12px;color:var(--muted);margin-top:3px}
+.sec-divider{height:2px;background:var(--border);margin-bottom:18px}
+
+/* ── BLOCK GRID TRACKER ── */
+.block-grid-wrap{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:24px;margin-bottom:36px}
+.block-legend{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:18px}
+.leg-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
+.leg-dot{width:14px;height:14px;border-radius:3px}
+.leg-dot.done{background:var(--green)}
+.leg-dot.pending{background:var(--border);border:1px solid #ccc}
+.blocks-container{display:flex;flex-wrap:wrap;gap:10px}
+.block-unit{background:rgba(0,0,0,0.02);border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;min-width:100px}
+.block-label{font-size:11px;font-weight:700;color:var(--deep);letter-spacing:1px;margin-bottom:8px;text-transform:uppercase}
+.flat-dots{display:flex;gap:5px;flex-wrap:wrap}
+.flat-dot{
+  width:26px;height:26px;border-radius:5px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;cursor:default;
+  transition:transform 0.15s;
+}
+.flat-dot:hover{transform:scale(1.15)}
+.flat-dot.done{background:var(--green);color:white}
+.flat-dot.pending{background:#f0ece6;color:#aaa;border:1px solid var(--border)}
+.flat-dot[title]:hover::after{
+  content:attr(title);position:absolute;
+  background:var(--deep);color:white;font-size:10px;
+  padding:4px 8px;border-radius:4px;white-space:nowrap;
+  transform:translateY(-28px);pointer-events:none;z-index:10;
+}
+
+/* ── CHART GRID ── */
+.chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-bottom:28px}
+.chart-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:22px}
+.chart-card h3{font-size:13px;font-weight:700;color:var(--deep);letter-spacing:0.3px;margin-bottom:4px}
+.chart-card p{font-size:11px;color:var(--muted);margin-bottom:16px}
+.chart-wrap{position:relative;height:220px}
+.chart-wrap.tall{height:260px}
+
+/* ── AMENITIES BARS ── */
+.amenity-list{display:flex;flex-direction:column;gap:10px}
+.amenity-row{display:flex;align-items:center;gap:10px}
+.amenity-name{font-size:12px;color:var(--deep);min-width:200px;flex-shrink:0}
+.amenity-bar-bg{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.amenity-bar-fill{height:100%;border-radius:4px;background:var(--teal);transition:width 1s ease}
+.amenity-pct{font-size:11px;font-weight:700;color:var(--teal);min-width:36px;text-align:right}
+
+/* ── SUPPORT METER ── */
+.support-meter{text-align:center;padding:16px 0}
+.support-score{font-family:'Cormorant Garamond',serif;font-size:64px;font-weight:700;color:var(--saffron);line-height:1}
+.support-label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.support-bar-wrap{margin:16px auto 0;max-width:280px;height:12px;background:var(--border);border-radius:6px;overflow:hidden}
+.support-bar-fill{height:100%;background:linear-gradient(90deg,var(--red),#f39c12,var(--green));border-radius:6px;transition:width 1s ease}
+
+/* ── PARKING SUMMARY ── */
+.parking-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.parking-card{background:var(--teal-light);border:1.5px solid rgba(42,127,111,0.2);border-radius:10px;padding:18px;text-align:center}
+.parking-card .pv{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:700;color:var(--teal)}
+.parking-card .pl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+
+/* ── FOOTER ── */
+footer{background:var(--deep);color:rgba(255,255,255,0.4);text-align:center;padding:24px;font-size:12px;line-height:2}
+footer strong{color:rgba(255,255,255,0.7)}
+
+/* RESPONSIVE */
+@media(max-width:520px){
+  .chart-grid{grid-template-columns:1fr}
+  .parking-grid{grid-template-columns:1fr}
+  .amenity-name{min-width:140px}
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    HIG Flats Owners Welfare Association
+  </div>
+  <div class="topbar-right">
+    <span class="last-refresh" id="lastRefresh">Loading…</span>
+    <a href="index.html" class="btn-back">← Back to Survey</a>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="dash-hero">
+  <div style="position:relative">
+    <h1>Community <em>Redevelopment</em> Dashboard</h1>
+    <p>Adyar Apartments · Kotturpuram · Live Results</p>
+  </div>
+  <div class="dash-arch"></div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="spinner"></div>
+  <p>Fetching live responses from the Association database…</p>
+</div>
+
+<!-- DASHBOARD CONTENT -->
+<div class="dash-wrap" id="dashContent" style="display:none">
+
+  <!-- STAT CARDS -->
+  <div class="stat-row" id="statRow"></div>
+
+  <!-- BLOCK TRACKER -->
+  <div class="sec-hd">
+    <h2>📍 Block-wise Response Tracker</h2>
+    <p>Green = response received · Grey = pending · 23 blocks × 6 flats = 138 units</p>
+  </div>
+  <div class="sec-divider"></div>
+  <div class="block-grid-wrap">
+    <div class="block-legend">
+      <div class="leg-item"><div class="leg-dot done"></div> Response received</div>
+      <div class="leg-item"><div class="leg-dot pending"></div> Pending</div>
+    </div>
+    <div class="blocks-container" id="blockGrid"></div>
+  </div>
+
+  <!-- UNIT PREFERENCES -->
+  <div class="sec-hd">
+    <h2>🏠 Unit & Usage Preferences</h2>
+    <p>What owners envision for their redeveloped flat</p>
+  </div>
+  <div class="sec-divider"></div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h3>Post-Redevelopment Intent</h3>
+      <p>How owners plan to use their flat</p>
+      <div class="chart-wrap"><canvas id="chartIntent"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Flat Purpose</h3>
+      <p>Residential vs. Commercial vs. Office</p>
+      <div class="chart-wrap"><canvas id="chartPurpose"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Preferred Carpet Area</h3>
+      <p>Sq.ft. range distribution across owners</p>
+      <div class="chart-wrap"><canvas id="chartSqft"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>BHK Preference</h3>
+      <p>2 BHK vs. 3 BHK vs. 4 BHK demand</p>
+      <div class="chart-wrap"><canvas id="chartBhk"></canvas></div>
+    </div>
+  </div>
+
+  <!-- SQFT ↔ BHK CORRELATION -->
+  <div class="sec-hd" style="margin-top:36px">
+    <h2>🔗 Carpet Area ↔ BHK Correlation</h2>
+    <p>How sq.ft. preferences align with BHK choices — grouped bar shows count of owners per BHK within each area band</p>
+  </div>
+  <div class="sec-divider"></div>
+  <div class="chart-grid">
+    <div class="chart-card" style="grid-column:1/-1">
+      <h3>Area Band × BHK — Owner Distribution</h3>
+      <p>Each group = one sq.ft. band · bars = BHK type · height = number of owners</p>
+      <div class="chart-wrap" style="height:280px"><canvas id="chartCorrelation"></canvas></div>
+    </div>
+  </div>
+  <div class="chart-card" id="correlationInsights" style="margin-top:16px;margin-bottom:36px;padding:20px 24px">
+    <h3 style="margin-bottom:12px;font-size:13px;font-weight:700">📌 Key Insights</h3>
+    <div id="insightsList" style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--muted);line-height:1.6"></div>
+  </div>
+
+  <!-- PARKING -->
+  <div class="sec-hd">
+    <h2>🚗 Parking Demand Summary</h2>
+    <p>Total slots requested across all responding flats — indicative until all 138 responses are received</p>
+  </div>
+  <div class="sec-divider"></div>
+  <div class="parking-grid" id="parkingTotals" style="margin-bottom:12px"></div>
+  <div style="background:#fff8f0;border:1.5px solid rgba(224,123,57,0.3);border-radius:8px;padding:12px 16px;margin-bottom:36px;font-size:12px;color:var(--muted);line-height:1.6">
+    ⚠️ <strong>Disclaimer:</strong> Parking totals are indicative and based on responses received so far. Final parking demand summary and per-flat allocation details will be produced once all 138 flat responses are submitted.
+  </div>
+
+  <!-- COMMUNITY DESIGN -->
+  <div class="sec-hd">
+    <h2>🌿 Community Design Preferences</h2>
+    <p>Greenery priority and building height preference</p>
+  </div>
+  <div class="sec-divider"></div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h3>Greenery & Landscaping</h3>
+      <p>Owner stance on trees and green corridors</p>
+      <div class="chart-wrap"><canvas id="chartGreen"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Building Height Preference</h3>
+      <p>Low-rise vs. mid-rise vs. high-rise</p>
+      <div class="chart-wrap"><canvas id="chartHeight"></canvas></div>
+    </div>
+  </div>
+
+  <!-- AMENITIES -->
+  <div class="sec-hd" style="margin-top:36px">
+    <h2>🏗️ Physical Infrastructure Demand</h2>
+    <p>% of responding owners who selected each amenity</p>
+  </div>
+  <div class="sec-divider"></div>
+  <div class="chart-card" style="margin-bottom:28px">
+    <div class="amenity-list" id="physicalBars"></div>
+  </div>
+
+  <div class="sec-hd">
+    <h2>👨‍👩‍👧 Social Infrastructure Demand</h2>
+    <p>% of responding owners who selected each facility</p>
+  </div>
+  <div class="sec-divider"></div>
+  <div class="chart-card" style="margin-bottom:36px">
+    <div class="amenity-list" id="socialBars"></div>
+  </div>
+
+  <!-- GOVERNANCE & FINANCIAL -->
+  <div class="sec-hd">
+    <h2>🏛️ Governance & Financial Preferences</h2>
+    <p>Association structure, transit, rent allowance and developer priorities</p>
+  </div>
+  <div class="sec-divider"></div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h3>New Members to Association</h3>
+      <p>How many new members owners are willing to add</p>
+      <div class="chart-wrap"><canvas id="chartMembers"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Transit Accommodation</h3>
+      <p>Preference during construction period</p>
+      <div class="chart-wrap"><canvas id="chartTransit"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Min. Monthly Rent Allowance Required (₹)</h3>
+      <p>If owners are required to vacate during construction</p>
+      <div class="chart-wrap"><canvas id="chartRent"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Developer Selection Priority</h3>
+      <p>Top factors owners want in the developer (multi-select, max 2)</p>
+      <div class="chart-wrap tall"><canvas id="chartDev"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Acceptable Project Timeline</h3>
+      <p>Agreement to possession — owner expectations</p>
+      <div class="chart-wrap"><canvas id="chartTimeline"></canvas></div>
+    </div>
+  </div>
+
+  <!-- SUPPORT LEVEL -->
+  <div class="sec-hd" style="margin-top:36px">
+    <h2>📊 Redevelopment Support Level</h2>
+    <p>Average score on a 1–5 scale from all responding owners</p>
+  </div>
+  <div class="sec-divider"></div>
+  <div class="chart-card" style="max-width:400px;margin:0 auto 40px">
+    <div class="support-meter">
+      <div class="support-score" id="supportScore">—</div>
+      <div class="support-label">Average Support Score / 5</div>
+      <div class="support-bar-wrap">
+        <div class="support-bar-fill" id="supportBar" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="chart-wrap" style="height:180px;margin-top:16px"><canvas id="chartSupport"></canvas></div>
+  </div>
+
+</div>
+
+<footer>
+  <strong>HIG Flats Owners Welfare Association</strong><br/>
+  Adyar Apartments, Kotturpuram, Chennai – 600 085<br/>
+  Dashboard refreshes live from the Association database
+</footer>
+
+<script>
+// ── PASTE YOUR SAME APPS SCRIPT URL HERE ──
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw7MYi48SU974wnqGYVdX-Pev6vzb51H9w3Jggoe7sNOoR09EiFOiMnY6kLVpCjkCeELA/exec';
+
+const BLOCKS = 'ABCDEFGHIJKLMNOPQRSTUVW'.split('');
+const SAFFRON = '#e07b39';
+const TEAL = '#2a7f6f';
+const DEEP = '#1c2b3a';
+const BAR_COLOR  = '#4a6fa5';   // single neutral blue for all bar charts
+const BAR_HOVER  = '#3a5a8a';
+const PALETTE    = ['#e07b39','#2a7f6f','#1c2b3a','#f5a96a','#4a8c5c','#e74c3c','#3498db','#9b59b6','#f39c12','#1abc9c'];
+
+// Chart.js global defaults
+Chart.defaults.font.family = "'Nunito', sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.plugins.legend.position = 'bottom';
+Chart.defaults.plugins.legend.labels.padding = 12;
+Chart.defaults.plugins.legend.labels.boxWidth = 12;
+
+function makeDoughnut(id, labels, values) {
+  new Chart(document.getElementById(id), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: PALETTE, borderWidth: 2, borderColor: '#fff' }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '62%',
+      plugins: { tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} (${Math.round(ctx.raw / ctx.dataset.data.reduce((a,b)=>a+b,0) * 100)}%)` } } }
+    }
+  });
+}
+
+function makeBar(id, labels, values, horizontal=false) {
+  new Chart(document.getElementById(id), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: BAR_COLOR,
+        hoverBackgroundColor: BAR_HOVER,
+        borderRadius: 4,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      indexAxis: horizontal ? 'y' : 'x',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: horizontal }, ticks: { maxRotation: 30 } },
+        y: { grid: { color: '#f0ece6' }, ticks: { precision: 0 } }
+      }
+    }
+  });
+}
+
+function countField(rows, field) {
+  const counts = {};
+  rows.forEach(r => {
+    const v = String(r[field] ?? '—').trim();
+    if (v && v !== '—') counts[v] = (counts[v] || 0) + 1;
+  });
+  return counts;
+}
+
+function countMulti(rows, field) {
+  const counts = {};
+  rows.forEach(r => {
+    const vals = String(r[field] ?? '').split(',').map(s => s.trim()).filter(Boolean);
+    vals.forEach(v => { if (v !== '—') counts[v] = (counts[v] || 0) + 1; });
+  });
+  return counts;
+}
+
+function buildAmenityBars(containerId, counts, total, labelMap) {
+  const container = document.getElementById(containerId);
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  sorted.forEach(([key, val]) => {
+    const label = labelMap[key] || key;
+    const pct = total > 0 ? Math.round(val / total * 100) : 0;
+    const row = document.createElement('div');
+    row.className = 'amenity-row';
+    row.innerHTML = `
+      <span class="amenity-name">${label}</span>
+      <div class="amenity-bar-bg"><div class="amenity-bar-fill" style="width:0%" data-pct="${pct}%"></div></div>
+      <span class="amenity-pct">${pct}%</span>`;
+    container.appendChild(row);
+  });
+  // Animate bars
+  setTimeout(() => {
+    container.querySelectorAll('.amenity-bar-fill').forEach(b => b.style.width = b.dataset.pct);
+  }, 200);
+}
+
+function buildBlockGrid(respondedFlats) {
+  const grid = document.getElementById('blockGrid');
+  BLOCKS.forEach(block => {
+    const unit = document.createElement('div');
+    unit.className = 'block-unit';
+    unit.innerHTML = `<div class="block-label">Block ${block}</div><div class="flat-dots" id="dots-${block}"></div>`;
+    grid.appendChild(unit);
+    const dotsWrap = document.getElementById(`dots-${block}`);
+    for (let f = 1; f <= 6; f++) {
+      const flatId = `${block}-${f}`;
+      const isDone = respondedFlats.has(flatId);
+      const dot = document.createElement('div');
+      dot.className = `flat-dot ${isDone ? 'done' : 'pending'}`;
+      dot.textContent = f;
+      dot.title = `${flatId}${isDone ? ' ✓ Responded' : ' — Pending'}`;
+      dotsWrap.appendChild(dot);
+    }
+  });
+}
+
+function buildStats(rows) {
+  const total = 138;
+  const responded = rows.length;
+  const pending = total - responded;
+  const pct = Math.round(responded / total * 100);
+  // Avg support
+  const supportVals = rows.map(r => parseFloat(String(r['Q15 — Redevelopment Support (1–5)'] ?? ''))).filter(v => !isNaN(v));
+  const avgSupport = supportVals.length > 0 ? (supportVals.reduce((a,b)=>a+b,0)/supportVals.length).toFixed(1) : '—';
+  const carMap = {'0':0,'1':1,'2':2,'3':3};
+  const totalCar  = rows.reduce((s,r) => s + (carMap[String(r['Q5 — Car Parking Slots']  ?? '').trim()] || 0), 0);
+  const totalBike = rows.reduce((s,r) => s + (carMap[String(r['Q5 — Bike Parking Slots'] ?? '').trim()] || 0), 0);
+
+  document.getElementById('statRow').innerHTML = `
+    <div class="stat-card highlight">
+      <div class="sv">${responded}</div>
+      <div class="sl">Responses Received</div>
+      <div class="sp">${pct}% of 138 flats</div>
+    </div>
+    <div class="stat-card">
+      <div class="sv">${pending}</div>
+      <div class="sl">Responses Pending</div>
+      <div class="sp">${100-pct}% remaining</div>
+    </div>
+    <div class="stat-card">
+      <div class="sv">${pct}%</div>
+      <div class="sl">Completion Rate</div>
+      <div class="sp">Target: 100%</div>
+    </div>
+    <div class="stat-card">
+      <div class="sv">${avgSupport}</div>
+      <div class="sl">Avg Support Score</div>
+      <div class="sp">Scale of 1–5</div>
+    </div>`;
+
+  // Support meter
+  document.getElementById('supportScore').textContent = avgSupport;
+  document.getElementById('supportBar').style.width = avgSupport !== '—' ? (parseFloat(avgSupport)/5*100)+'%' : '0%';
+}
+
+function renderAll(data) {
+  const rows = data.rows || [];
+  const n = rows.length;
+
+  // Header map (Apps Script returns objects keyed by header)
+  // Build responded flat set
+  const respondedFlats = new Set(rows.map(r => String(r['Flat ID'] ?? '').trim().toUpperCase()));
+
+  buildStats(rows);
+  buildBlockGrid(respondedFlats);
+
+  // Helper
+  function cnt(field) { return countField(rows, field); }
+  function cntM(field) { return countMulti(rows, field); }
+  function split(obj) { return [Object.keys(obj), Object.values(obj)]; }
+
+  // Intent → horizontal bar
+  const intentOrder = ['reside','rent','sell','undecided'];
+  const intentLabels = {reside:'Self-Occupy',rent:'Rent Out',sell:'Sell',undecided:'Undecided'};
+  const ic = cnt('Q1 — Post-Redevelopment Utilisation');
+  makeBar('chartIntent', intentOrder.map(k=>intentLabels[k]), intentOrder.map(k=>ic[k]||0), true);
+
+  // Purpose → horizontal bar
+  const purpOrder = ['residential','commercial','office'];
+  const purpLabels = {residential:'Residential',commercial:'Commercial',office:'Office / Professional'};
+  const pc = cnt('Q2 — Flat Purpose');
+  makeBar('chartPurpose', purpOrder.map(k=>purpLabels[k]), purpOrder.map(k=>pc[k]||0), true);
+
+  // Sqft → vertical bar
+  const sqftOrder = ['1000-1200','1200-1500','1500-1800','1800-2200','2200-2500','>2500'];
+  const sqftLabels = {'1000-1200':'1000–1200','1200-1500':'1200–1500','1500-1800':'1500–1800','1800-2200':'1800–2200','2200-2500':'2200–2500','>2500':'2500+'};
+  const sc = cnt('Q3 — Preferred Sq.Ft.');
+  const sqftVals = sqftOrder.map(k => sc[k] || 0);
+  makeBar('chartSqft', sqftOrder.map(k=>sqftLabels[k]), sqftVals);
+
+  // BHK → vertical bar
+  const bhkOrder = ['2bhk','3bhk','4bhk'];
+  const bhkLabels = {'2bhk':'2 BHK','3bhk':'3 BHK','4bhk':'4 BHK'};
+  const bc = cnt('Q4 — BHK Preference');
+  makeBar('chartBhk', bhkOrder.map(k=>bhkLabels[k]), bhkOrder.map(k=>bc[k]||0));
+
+  // ── SQFT ↔ BHK CORRELATION — grouped bar ──
+  const corrMatrix = {};
+  sqftOrder.forEach(s => { corrMatrix[s] = {2:0, 3:0, 4:0}; });
+  rows.forEach(r => {
+    const s = String(r['Q3 — Preferred Sq.Ft.'] ?? '').trim();
+    const b = String(r['Q4 — BHK Preference'] ?? '').trim();
+    const bnum = b === '2bhk' ? 2 : b === '3bhk' ? 3 : b === '4bhk' ? 4 : null;
+    if (corrMatrix[s] && bnum) corrMatrix[s][bnum]++;
+  });
+  new Chart(document.getElementById('chartCorrelation'), {
+    type: 'bar',
+    data: {
+      labels: sqftOrder.map(k => sqftLabels[k]),
+      datasets: [
+        { label: '2 BHK', data: sqftOrder.map(s => corrMatrix[s][2]), backgroundColor: '#4a6fa5', borderRadius: 4 },
+        { label: '3 BHK', data: sqftOrder.map(s => corrMatrix[s][3]), backgroundColor: '#2a7f6f', borderRadius: 4 },
+        { label: '4 BHK', data: sqftOrder.map(s => corrMatrix[s][4]), backgroundColor: '#1c2b3a', borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, position: 'top' },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw} owners` } }
+      },
+      scales: {
+        x: { grid: { display: false }, stacked: false },
+        y: { grid: { color: '#f0ece6' }, ticks: { precision: 0 }, title: { display: true, text: 'No. of Owners' } }
+      }
+    }
+  });
+
+  // ── CORRELATION INSIGHTS ──
+  const insightsList = document.getElementById('insightsList');
+  const totalRespondents = rows.length;
+  // Most popular sqft band
+  const topSqft = sqftOrder.reduce((a,b) => (sc[a]||0) >= (sc[b]||0) ? a : b);
+  const topSqftPct = totalRespondents > 0 ? Math.round((sc[topSqft]||0)/totalRespondents*100) : 0;
+  // Most popular BHK
+  const topBhk = bhkOrder.reduce((a,b) => (bc[a]||0) >= (bc[b]||0) ? a : b);
+  const topBhkPct = totalRespondents > 0 ? Math.round((bc[topBhk]||0)/totalRespondents*100) : 0;
+  // Alignment: owners who chose the expected BHK for their sqft band
+  let aligned = 0;
+  rows.forEach(r => {
+    const s = String(r['Q3 — Preferred Sq.Ft.'] ?? '').trim();
+    const b = String(r['Q4 — BHK Preference'] ?? '').trim();
+    const expected = (s==='1000-1200'||s==='1200-1500') ? '2bhk' : (s==='1500-1800'||s==='1800-2200') ? '3bhk' : '4bhk';
+    if (b === expected) aligned++;
+  });
+  const alignedPct = totalRespondents > 0 ? Math.round(aligned/totalRespondents*100) : 0;
+  // 4BHK + large area
+  const premiumCount = (corrMatrix['2200-2500'][4] || 0) + (corrMatrix['>2500'][4] || 0);
+
+  const insights = [
+    `🏆 Most preferred area band: <strong>${sqftLabels[topSqft]} sq.ft.</strong> — chosen by ${topSqftPct}% of responding owners.`,
+    `🛏️ Most preferred BHK: <strong>${bhkLabels[topBhk]}</strong> — selected by ${topBhkPct}% of owners.`
+  ];
+  insights.forEach(text => {
+    const div = document.createElement('div');
+    div.style.cssText = 'padding:8px 12px;background:var(--teal-light);border-radius:6px;border-left:3px solid var(--teal)';
+    div.innerHTML = text;
+    insightsList.appendChild(div);
+  });
+
+  // Parking totals summary only (no charts)
+  const carMap = {'0':0,'1':1,'2':2,'3':3};
+  const totalCar  = rows.reduce((s,r) => s + (carMap[String(r['Q5 — Car Parking Slots']  ?? '').trim()] || 0), 0);
+  const totalBike = rows.reduce((s,r) => s + (carMap[String(r['Q5 — Bike Parking Slots'] ?? '').trim()] || 0), 0);
+  document.getElementById('parkingTotals').innerHTML = `
+    <div class="parking-card"><div class="pv">${totalCar}</div><div class="pl">Total Car Slots Requested</div></div>
+    <div class="parking-card"><div class="pv">${totalBike}</div><div class="pl">Total Bike Slots Requested</div></div>`;
+
+  // Greenery → doughnut (3 options — suits pie)
+  const gc = cnt('Q6 — Greenery Preference');
+  const greenLabels = {yes_priority:'Priority (even if area ↓)',yes_balance:'Balanced',neutral:'Neutral',no:'Maximise Build'};
+  makeDoughnut('chartGreen', Object.keys(gc).map(k=>greenLabels[k]||k), Object.values(gc));
+
+  // Height → horizontal bar
+  const hc = cnt('Q9 — Building Height');
+  const heightOrder = ['g+4','g+7','g+12','norm'];
+  const heightLabels = {'g+4':'G+4 Low-rise','g+7':'G+7 Mid-rise','g+12':'G+12–15 High-rise',norm:'Per CMDA Norms'};
+  makeBar('chartHeight', heightOrder.map(k=>heightLabels[k]), heightOrder.map(k=>hc[k]||0), true);
+
+  // Physical infra amenities
+  const physMap = {covered_parking:'Covered Car Parking',ev_charging:'EV Charging',visitor_parking:'Visitor Parking',cycle_stand:'Cycle Stand',solar:'Solar Panels',rwh:'Rainwater Harvesting',stp:'STP & Grey Water Reuse',solid_waste:'Solid Waste Mgmt',dg_backup:'DG Backup',cctv:'24×7 CCTV',intercom:'Video Door Phone',access_ctrl:'Boom Barrier',fire_sys:'Fire Detection'};
+  buildAmenityBars('physicalBars', cntM('Q7 — Physical Infrastructure'), n, physMap);
+
+  // Social infra amenities
+  const socialMap = {gym:'Gymnasium',jogging:'Jogging Track',yoga:'Yoga/Meditation Deck',swimming:'Swimming Pool',clubhouse:'Community Hall',temple:'Temple/Prayer Room',library:'Mini Library',cowork:'Co-working Space',play_area:"Children's Play Area",senior_zone:'Senior Citizen Area',daycare:'Crèche/Day-care'};
+  buildAmenityBars('socialBars', cntM('Q8 — Social Infrastructure'), n, socialMap);
+
+  // Members → doughnut
+  const mc = cnt('Q10 — New Members Willing to Add');
+  const memLabels = {none:'No New Members','2per':'2 per Block (~46)','4per':'4 per Block (~92)',sqft:'By Sq.Ft. Vote'};
+  makeDoughnut('chartMembers', Object.keys(mc).map(k=>memLabels[k]||k), Object.values(mc));
+
+  // Transit → doughnut
+  const tc = cnt('Q11 — Transit Accommodation');
+  const transLabels = {allowance:'Rent Allowance',transit:'Developer Transit Flat',own:'Own Arrangement',phased:'Phased — No Vacate'};
+  makeDoughnut('chartTransit', Object.keys(tc).map(k=>transLabels[k]||k), Object.values(tc));
+
+  // Q12 Rent Allowance → vertical bar (NEW)
+  const rc = cnt('Q12 — Min. Rent Allowance (₹)');
+  const rentOrder = ['<20k','20-30k','30-50k','>50k','na'];
+  const rentLabels = {'<20k':'< ₹20K','20-30k':'₹20–30K','30-50k':'₹30–50K','>50k':'> ₹50K','na':'Not Applicable'};
+  makeBar('chartRent', rentOrder.map(k=>rentLabels[k]), rentOrder.map(k=>rc[k]||0));
+
+  // Developer criteria → horizontal bar (multi-select)
+  const dc = cntM('Q13 — Developer Criteria (up to 2)');
+  const devOrder = ['track','area','finance','local','design'];
+  const devLabels = {track:'Track Record',area:'Area Offered',finance:'Financial Strength',local:'Local Reputation',design:'Design Quality'};
+  makeBar('chartDev', devOrder.map(k=>devLabels[k]||k), devOrder.map(k=>dc[k]||0), true);
+
+  // Timeline normaliser — handles:
+  // 1. New unambiguous codes: LT2YR, 2TO3YR, 3TO4YR, GT4YR
+  // 2. Old raw values if any: <2, 2-3, 3-4, >4
+  // 3. Date-coerced ISO strings from Sheets auto-converting "2-3" → date
+  function normaliseTimeline(raw) {
+    const s = String(raw ?? '').trim();
+    const codeMap = {'LT2YR':'<2','2TO3YR':'2-3','3TO4YR':'3-4','GT4YR':'>4'};
+    if (codeMap[s]) return codeMap[s];
+    if (s === '<2')  return '<2';
+    if (s === '>4')  return '>4';
+    if (s === '2-3') return '2-3';
+    if (s === '3-4') return '3-4';
+    // Date-coerced: Google Sheets sends ISO date string or serial — discard
+    return '—';
+  }
+
+  const tlc = {};
+  const tlOrder = ['<2','2-3','3-4','>4'];
+  rows.forEach(r => {
+    const raw = r['Q14 — Acceptable Timeline'];
+    const v = normaliseTimeline(raw);
+    if (v && v !== '—') tlc[v] = (tlc[v] || 0) + 1;
+  });
+  const tlLabels = {'<2':'< 2 yrs','2-3':'2–3 yrs','3-4':'3–4 yrs','>4':'4+ yrs'};
+  new Chart(document.getElementById('chartTimeline'), {
+    type: 'bar',
+    data: {
+      labels: tlOrder.map(k => tlLabels[k]),
+      datasets: [{ data: tlOrder.map(k => tlc[k]||0), backgroundColor: PALETTE, borderRadius: 5, borderSkipped: false }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { type: 'category', grid: { display: false } },
+        y: { grid: { color: '#f0ece6' }, ticks: { precision: 0 }, title: { display: true, text: 'No. of Owners' } }
+      }
+    }
+  });
+
+  // Support distribution → vertical bar
+  const supDist = {'1':0,'2':0,'3':0,'4':0,'5':0};
+  rows.forEach(r => {
+    const v = String(r['Q15 — Redevelopment Support (1–5)'] ?? '').trim();
+    if (supDist[v] !== undefined) supDist[v]++;
+  });
+  makeBar('chartSupport',
+    ['1\nStrongly Against','2\nAgainst','3\nNeutral','4\nSupport','5\nStrongly Support'],
+    [supDist['1'],supDist['2'],supDist['3'],supDist['4'],supDist['5']]);
+
+  // Show dashboard
+  document.getElementById('loadingScreen').style.display = 'none';
+  document.getElementById('dashContent').style.display = 'block';
+  document.getElementById('lastRefresh').textContent = 'Last updated: ' + new Date().toLocaleTimeString('en-IN');
+}
+
+// ── FETCH DATA ──
+fetch(APPS_SCRIPT_URL + '?action=getDashboard')
+  .then(r => r.json())
+  .then(data => renderAll(data))
+  .catch(err => {
+    document.getElementById('loadingScreen').innerHTML = `
+      <p style="color:#e74c3c;font-size:14px">⚠️ Could not load dashboard data.<br/>Please ensure the Apps Script is deployed and accessible.<br/><br/><small>${err.message}</small></p>`;
+  });
+</script>
+</body>
+</html>

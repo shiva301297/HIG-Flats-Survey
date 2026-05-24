@@ -300,12 +300,12 @@ body.ta .opt-en{font-size:13px;color:var(--muted)}
       <div>
         <div class="fi-label" data-en>Full Name</div>
         <div class="fi-label" data-ta>முழு பெயர்</div>
-        <input class="fi" type="text" placeholder="e.g. Ramesh Kumar" data-field="name"/>
+        <input class="fi" type="text" placeholder="Enter your full name" data-field="name"/>
       </div>
       <div>
         <div class="fi-label" data-en>Mobile Number</div>
         <div class="fi-label" data-ta>தொலைபேசி எண்</div>
-        <input class="fi" type="tel" placeholder="+91 XXXXX XXXXX" data-field="mobile"/>
+        <input class="fi" type="tel" placeholder="10-digit mobile number" data-field="mobile"/>
       </div>
       <div>
         <div class="fi-label" data-en>Email Address</div>
@@ -428,24 +428,35 @@ body.ta .opt-en{font-size:13px;color:var(--muted)}
   <div class="q-card" id="c5">
     <div class="q-num" data-en>Question 05 of 15</div>
     <div class="q-num" data-ta>கேள்வி 05 / 15</div>
-    <div class="q-text" data-en>How many car parking spots do you require for this flat?<span class="req">*</span></div>
-    <div class="q-text" data-ta>இந்த குடியிருப்பிற்கு எத்தனை கார் நிறுத்த இடங்கள் தேவை?<span class="req">*</span></div>
-    <div class="opts">
-      <label class="opt"><input type="radio" name="q5car" value="0"/><div><div class="opt-en">None — I do not own a car</div><div class="opt-ta">இல்லை — என்னிடம் கார் இல்லை</div></div></label>
-      <label class="opt"><input type="radio" name="q5car" value="1"/><div><div class="opt-en">1 covered car parking slot</div><div class="opt-ta">1 மூடிய கார் நிறுத்த இடம்</div></div></label>
-      <label class="opt"><input type="radio" name="q5car" value="2"/><div><div class="opt-en">2 covered car parking slots</div><div class="opt-ta">2 மூடிய கார் நிறுத்த இடங்கள்</div></div></label>
-      <label class="opt"><input type="radio" name="q5car" value="3+"/><div><div class="opt-en">3 or more slots (please specify in feedback)</div><div class="opt-ta">3 அல்லது அதிகம் (கருத்தில் குறிப்பிடவும்)</div></div></label>
+    <div class="q-text" data-en>How many parking slots do you require for this flat?<span class="req">*</span></div>
+    <div class="q-text" data-ta>இந்த குடியிருப்பிற்கு எத்தனை வாகன நிறுத்த இடங்கள் தேவை?<span class="req">*</span></div>
+
+    <!-- Car parking box -->
+    <div style="border:1.5px solid var(--border);border-radius:8px;padding:16px 18px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px">🚗 Car Parking</div>
+      <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px" data-ta>🚗 கார் நிறுத்தம்</div>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="q5car" value="0"/><div><div class="opt-en">None — I do not own a car</div><div class="opt-ta">இல்லை — என்னிடம் கார் இல்லை</div></div></label>
+        <label class="opt"><input type="radio" name="q5car" value="1"/><div><div class="opt-en">1 covered car parking slot</div><div class="opt-ta">1 மூடிய கார் நிறுத்த இடம்</div></div></label>
+        <label class="opt"><input type="radio" name="q5car" value="2"/><div><div class="opt-en">2 covered car parking slots</div><div class="opt-ta">2 மூடிய கார் நிறுத்த இடங்கள்</div></div></label>
+        <label class="opt"><input type="radio" name="q5car" value="3"/><div><div class="opt-en">3 covered car parking slots</div><div class="opt-ta">3 மூடிய கார் நிறுத்த இடங்கள்</div></div></label>
+      </div>
     </div>
-    <div class="note" style="margin-top:14px" data-en>🏍️ Two-wheeler parking</div>
-    <div class="note" style="margin-top:14px" data-ta>🏍️ இரு சக்கர வாகன நிறுத்தம்</div>
-    <div class="opts" style="margin-top:10px">
-      <label class="opt"><input type="radio" name="q5bike" value="0"/><div><div class="opt-en">None — I do not own a two-wheeler</div><div class="opt-ta">இல்லை — என்னிடம் இரு சக்கர வாகனம் இல்லை</div></div></label>
-      <label class="opt"><input type="radio" name="q5bike" value="1"/><div><div class="opt-en">1 two-wheeler slot</div><div class="opt-ta">1 இரு சக்கர வாகன இடம்</div></div></label>
-      <label class="opt"><input type="radio" name="q5bike" value="2"/><div><div class="opt-en">2 two-wheeler slots</div><div class="opt-ta">2 இரு சக்கர வாகன இடங்கள்</div></div></label>
-      <label class="opt"><input type="radio" name="q5bike" value="3+"/><div><div class="opt-en">3 or more slots</div><div class="opt-ta">3 அல்லது அதிகம்</div></div></label>
+
+    <!-- Bike parking box -->
+    <div style="border:1.5px solid var(--border);border-radius:8px;padding:16px 18px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px">🏍️ Two-Wheeler Parking</div>
+      <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px" data-ta>🏍️ இரு சக்கர வாகன நிறுத்தம்</div>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="q5bike" value="0"/><div><div class="opt-en">None — I do not own a two-wheeler</div><div class="opt-ta">இல்லை — என்னிடம் இரு சக்கர வாகனம் இல்லை</div></div></label>
+        <label class="opt"><input type="radio" name="q5bike" value="1"/><div><div class="opt-en">1 two-wheeler slot</div><div class="opt-ta">1 இரு சக்கர வாகன இடம்</div></div></label>
+        <label class="opt"><input type="radio" name="q5bike" value="2"/><div><div class="opt-en">2 two-wheeler slots</div><div class="opt-ta">2 இரு சக்கர வாகன இடங்கள்</div></div></label>
+        <label class="opt"><input type="radio" name="q5bike" value="3"/><div><div class="opt-en">3 two-wheeler slots</div><div class="opt-ta">3 இரு சக்கர வாகன இடங்கள்</div></div></label>
+      </div>
     </div>
-    <div class="note" style="margin-top:10px" data-en>ℹ️ Parking allocation is subject to site constraints and CMDA norms. Your response will inform the negotiation with the developer.</div>
-    <div class="note" style="margin-top:10px" data-ta>ℹ️ வாகன நிறுத்த ஒதுக்கீடு தள கட்டுப்பாடுகள் மற்றும் CMDA விதிகளுக்கு உட்பட்டது.</div>
+
+    <div class="note" data-en>ℹ️ Parking allocation is subject to site constraints and CMDA norms. Your response will inform the negotiation with the developer.</div>
+    <div class="note" data-ta>ℹ️ வாகன நிறுத்த ஒதுக்கீடு தள கட்டுப்பாடுகள் மற்றும் CMDA விதிகளுக்கு உட்பட்டது.</div>
   </div>
   </div>
 
@@ -709,6 +720,29 @@ body.ta .opt-en{font-size:13px;color:var(--muted)}
   <p data-ta>நம் சமூகத்திற்கான உங்கள் கனவை பகிர்ந்தமைக்கு நன்றி. உங்கள் பதில் சங்கத்தால் ஆய்வு செய்யப்பட்டு முக்கிய மறுவடிவமைப்பு முடிவுகளை வடிவமைக்கும்.</p>
   <p style="margin-top:12px" data-en>If you own other flats in the colony, please fill a separate form for each.</p>
   <p class="suc-ta" data-ta>காலனியில் வேறு குடியிருப்புகள் இருந்தால், ஒவ்வொன்றிற்கும் தனி படிவம் நிரப்பவும்.</p>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:28px">
+    <button onclick="resetForm()" style="
+      background:white;color:var(--saffron);
+      border:2px solid var(--saffron);
+      padding:13px 36px;border-radius:8px;
+      font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;
+      cursor:pointer;letter-spacing:0.3px;width:100%;max-width:320px;
+      transition:all 0.2s;">
+      <span data-en>🏠 Fill Response for Another Flat</span>
+      <span data-ta>🏠 மற்றொரு குடியிருப்பிற்கு பதில் அளிக்கவும்</span>
+    </button>
+    <a href="dashboard.html" style="
+      display:block;width:100%;max-width:320px;text-align:center;
+      background:linear-gradient(135deg,#2a7f6f,#1d5c50);
+      color:white;text-decoration:none;
+      padding:14px 36px;border-radius:8px;
+      font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;
+      box-shadow:0 4px 18px rgba(42,127,111,0.35);
+      letter-spacing:0.3px;">
+      <span data-en>📊 View Community Dashboard →</span>
+      <span data-ta>📊 சமூக டாஷ்போர்டு காண்க →</span>
+    </a>
+  </div>
 </div>
 
 <!-- FOOTER -->
@@ -720,6 +754,34 @@ body.ta .opt-en{font-size:13px;color:var(--muted)}
 </footer>
 
 <script>
+// Reset form for another flat submission
+function resetForm() {
+  // Clear all inputs
+  document.getElementById('survey').reset();
+  // Clear likert
+  document.querySelectorAll('.lk-opt').forEach(o => o.classList.remove('sel'));
+  const q15v = document.getElementById('q15v');
+  if (q15v) q15v.value = '';
+  // Clear answered states and option highlights
+  document.querySelectorAll('.q-card').forEach(c => c.classList.remove('answered'));
+  document.querySelectorAll('.opt').forEach(o => o.classList.remove('sel'));
+  // Re-enable any disabled checkboxes (Q13 cap)
+  document.querySelectorAll('input[name="q11"]').forEach(c => {
+    c.disabled = false;
+    c.closest('.opt').style.opacity = '1';
+  });
+  // Reset progress bar
+  document.getElementById('progFill').style.width = '0%';
+  document.getElementById('progPct').textContent = '0%';
+  // Uncheck consent
+  document.getElementById('consent').checked = false;
+  // Show form, hide success
+  document.getElementById('successScr').style.display = 'none';
+  document.getElementById('formWrap').style.display = 'block';
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 // Language toggle
 function setLang(lang) {
   if (lang === 'ta') {
@@ -891,26 +953,50 @@ document.getElementById('survey').addEventListener('submit', function(e) {
   btn.textContent = 'Submitting…';
   btn.disabled = true;
 
-  // ── POST to Apps Script (no-cors mode; Apps Script handles CORS) ──
-  fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  })
-  .then(() => {
-    // no-cors means we can't read the response — treat reaching here as success
-    document.getElementById('formWrap').style.display = 'none';
-    const s = document.getElementById('successScr');
-    s.style.display = 'block';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  // ── Step 1: Check for duplicate (flat_id + mobile) before submitting ──
+  fetch(APPS_SCRIPT_URL + '?action=checkDuplicate&flat_id=' + encodeURIComponent(payload.flat_id) + '&mobile=' + encodeURIComponent(payload.mobile))
+  .then(r => r.json())
+  .then(res => {
+    if (res.duplicate) {
+      btn.textContent = origText;
+      btn.disabled = false;
+      const isTa = document.body.classList.contains('ta');
+      if (res.type === 'flat') {
+        alert(isTa
+          ? `குடியிருப்பு ${payload.flat_id} க்கான பதில் ஏற்கனவே பதிவு செய்யப்பட்டுள்ளது. ஒவ்வொரு குடியிருப்பிற்கும் ஒரே ஒரு பதில் மட்டுமே அனுமதிக்கப்படுகிறது.`
+          : `A response for Flat ${payload.flat_id} has already been recorded. Only one response per flat is permitted.`);
+      } else {
+        alert(isTa
+          ? `இந்த மொபைல் எண் ஏற்கனவே ${res.existing_flat} க்காக பயன்படுத்தப்பட்டுள்ளது. நீங்கள் வேறு குடியிருப்பிற்கு சமர்ப்பிக்க விரும்பினால் தொடர்பு கொள்ளவும்.`
+          : `This mobile number was already used for Flat ${res.existing_flat}. If you own multiple flats, please contact the committee.`);
+      }
+      return;
+    }
+    // ── Step 2: No duplicate — POST the response ──
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(() => {
+      document.getElementById('formWrap').style.display = 'none';
+      const s = document.getElementById('successScr');
+      s.style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    })
+    .catch(() => {
+      btn.textContent = origText;
+      btn.disabled = false;
+      alert(document.body.classList.contains('ta')
+        ? 'சமர்ப்பிப்பதில் பிழை. மீண்டும் முயற்சிக்கவும்.'
+        : 'Submission failed. Please check your connection and try again.');
+    });
   })
   .catch(() => {
     btn.textContent = origText;
     btn.disabled = false;
-    alert(document.body.classList.contains('ta')
-      ? 'சமர்ப்பிப்பதில் பிழை. மீண்டும் முயற்சிக்கவும்.'
-      : 'Submission failed. Please check your connection and try again.');
+    alert('Network error. Please check your connection and try again.');
   });
 });
 </script>
