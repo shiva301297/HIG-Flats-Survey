@@ -125,7 +125,17 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--deep);m
   position:relative;overflow:hidden;
 }
 .q-card:focus-within{border-color:var(--saffron);box-shadow:0 0 0 4px rgba(224,123,57,0.08)}
-.q-card.answered{border-color:#c8e6c9}
+.q-card.validation-error{
+  border-color:var(--brick) !important;
+  box-shadow:0 0 0 4px rgba(192,57,43,0.12) !important;
+  animation:errorPulse 0.4s ease;
+}
+@keyframes errorPulse{
+  0%{transform:scale(1)}
+  30%{transform:scale(1.01)}
+  100%{transform:scale(1)}
+}
+.q-card.validation-error .q-num{color:var(--brick)}
 .q-card.answered::after{
   content:'✓';position:absolute;top:14px;right:16px;
   width:22px;height:22px;background:var(--success);color:white;
@@ -751,8 +761,11 @@ function resetForm() {
   document.querySelectorAll('.lk-opt').forEach(o => o.classList.remove('sel'));
   const q15v = document.getElementById('q15v');
   if (q15v) q15v.value = '';
-  // Clear answered states and option highlights
-  document.querySelectorAll('.q-card').forEach(c => c.classList.remove('answered'));
+  // Clear answered states, option highlights, and validation errors
+  document.querySelectorAll('.q-card').forEach(c => {
+    c.classList.remove('answered');
+    c.classList.remove('validation-error');
+  });
   document.querySelectorAll('.opt').forEach(o => o.classList.remove('sel'));
   // Re-enable any disabled checkboxes (Q13 cap)
   document.querySelectorAll('input[name="q11"]').forEach(c => {
@@ -770,6 +783,15 @@ function resetForm() {
   // Scroll to top
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+// Clear validation error on text/select input change
+document.querySelectorAll('.fi').forEach(el => {
+  el.addEventListener('change', () => {
+    const card = el.closest('.q-card');
+    if (card) card.classList.remove('validation-error');
+    updateProgress();
+  });
+});
 
 // Language toggle
 function setLang(lang) {
@@ -851,7 +873,7 @@ document.querySelectorAll('input[name="q11"]').forEach(cb => {
   });
 });
 
-// Option highlight
+// Option highlight + clear validation error on answer
 document.querySelectorAll('.opt').forEach(opt => {
   const inp = opt.querySelector('input');
   if (!inp) return;
@@ -861,6 +883,9 @@ document.querySelectorAll('.opt').forEach(opt => {
     }
     if (inp.checked) opt.classList.add('sel');
     else opt.classList.remove('sel');
+    // Clear validation error on the parent card
+    const card = opt.closest('.q-card');
+    if (card) card.classList.remove('validation-error');
     updateProgress();
   });
 });
@@ -885,8 +910,91 @@ function getField(field) {
 document.getElementById('survey').addEventListener('submit', function(e) {
   e.preventDefault();
 
+  const isTa = document.body.classList.contains('ta');
+
+  // ── MANDATORY VALIDATION ──
+  const failures = [];
+
+  function checkField(selector, cardId, labelEn, labelTa) {
+    const el = document.querySelector(selector);
+    const empty = !el || !el.value.trim();
+    if (empty) failures.push({ cardId, label: isTa ? labelTa : labelEn });
+  }
+  function checkRadio(name, cardId, labelEn, labelTa) {
+    if (!document.querySelector(`input[name="${name}"]:checked`))
+      failures.push({ cardId, label: isTa ? labelTa : labelEn });
+  }
+  function checkCheckbox(name, cardId, labelEn, labelTa) {
+    if (!document.querySelector(`input[name="${name}"]:checked`))
+      failures.push({ cardId, label: isTa ? labelTa : labelEn });
+  }
+  function checkLikert(id, cardId, labelEn, labelTa) {
+    const el = document.getElementById(id);
+    if (!el || !el.value)
+      failures.push({ cardId, label: isTa ? labelTa : labelEn });
+  }
+  function checkSelect(field, cardId, labelEn, labelTa) {
+    const el = document.querySelector(`[data-field="${field}"]`);
+    if (!el || !el.value)
+      failures.push({ cardId, label: isTa ? labelTa : labelEn });
+  }
+
+  // Owner details
+  checkField('[data-field="name"]',   'c0', 'Full Name',    'முழு பெயர்');
+  checkField('[data-field="mobile"]', 'c0', 'Mobile Number','தொலைபேசி எண்');
+  checkField('[data-field="email"]',  'c0', 'Email Address','மின்னஞ்சல்');
+  checkSelect('block', 'c0', 'Block',       'தொகுதி');
+  checkSelect('flat',  'c0', 'Flat Number', 'குடியிருப்பு எண்');
+  // Q1–Q4
+  checkRadio('q1',    'c1', 'Q1 — Post-Redevelopment Intent',  'கேள்வி 1 — மறுவடிவமைப்பு நோக்கம்');
+  checkRadio('q2',    'c2', 'Q2 — Flat Purpose',               'கேள்வி 2 — குடியிருப்பு நோக்கம்');
+  checkRadio('q3',    'c3', 'Q3 — Preferred Carpet Area',      'கேள்வி 3 — விரும்பிய பரப்பு');
+  checkRadio('q4',    'c4', 'Q4 — BHK Preference',             'கேள்வி 4 — BHK விருப்பம்');
+  // Q5 Parking
+  checkRadio('q5car',  'c5', 'Q5 — Car Parking Slots',         'கேள்வி 5 — கார் நிறுத்தம்');
+  checkRadio('q5bike', 'c5', 'Q5 — Bike Parking Slots',        'கேள்வி 5 — இரு சக்கர நிறுத்தம்');
+  // Q6–Q9
+  checkRadio('q5',    'c6g', 'Q6 — Greenery Preference',       'கேள்வி 6 — பசுமை விருப்பம்');
+  checkCheckbox('q7', 'c7',  'Q7 — Physical Infrastructure',   'கேள்வி 7 — உடல் உள்கட்டமைப்பு');
+  checkCheckbox('q8s','c8s', 'Q8 — Social Infrastructure',     'கேள்வி 8 — சமூக உள்கட்டமைப்பு');
+  checkRadio('q9h',   'c9h', 'Q9 — Building Height',           'கேள்வி 9 — கட்டிட உயரம்');
+  // Q10–Q14
+  checkRadio('q8',    'c10a',  'Q10 — New Members',            'கேள்வி 10 — புதிய உறுப்பினர்கள்');
+  checkRadio('q10',   'c11r',  'Q11 — Rent Allowance',         'கேள்வி 11 — வாடகை கொடுப்பனவு');
+  checkCheckbox('q11','c13d',  'Q12 — Developer Criteria',     'கேள்வி 12 — டெவலப்பர் முன்னுரிமை');
+  checkRadio('q12',   'c14tl', 'Q13 — Project Timeline',       'கேள்வி 13 — திட்ட காலக்கெடு');
+  checkLikert('q15v', 'c15',   'Q14 — Support Level',          'கேள்வி 14 — ஆதரவு நிலை');
+
+  if (failures.length > 0) {
+    // Remove previous error highlights
+    document.querySelectorAll('.q-card.validation-error').forEach(c => {
+      c.classList.remove('validation-error');
+    });
+    // Highlight all failed cards
+    const seen = new Set();
+    failures.forEach(f => {
+      if (!seen.has(f.cardId)) {
+        seen.add(f.cardId);
+        const card = document.getElementById(f.cardId);
+        if (card) card.classList.add('validation-error');
+      }
+    });
+    // Scroll to first failed card
+    const firstCard = document.getElementById(failures[0].cardId);
+    if (firstCard) firstCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Show message
+    const msg = isTa
+      ? `${failures.length} கேள்வி(கள்) பதிலளிக்கப்படவில்லை:\n• ${failures.map(f=>f.label).join('\n• ')}`
+      : `Please answer all mandatory questions (${failures.length} remaining):\n• ${failures.map(f=>f.label).join('\n• ')}`;
+    setTimeout(() => alert(msg), 400);
+    return;
+  }
+
+  // Clear any leftover error highlights
+  document.querySelectorAll('.q-card.validation-error').forEach(c => c.classList.remove('validation-error'));
+
   if (!document.getElementById('consent').checked) {
-    alert(document.body.classList.contains('ta')
+    alert(isTa
       ? 'தொடர சம்மதம் தேவை.'
       : 'Please confirm the consent statement to proceed.');
     return;
