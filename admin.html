@@ -283,7 +283,15 @@ document.getElementById('pinInput').addEventListener('keydown', e => {
 function loadDashboard() {
   fetch(APPS_SCRIPT_URL + '?action=getDashboard')
     .then(r => r.json())
-    .then(data => renderAll(data))
+    .then(data => {
+      try {
+        renderAll(data);
+      } catch(renderErr) {
+        console.error('Render error:', renderErr);
+        document.getElementById('loadingScreen').innerHTML =
+          `<p style="color:#e74c3c;font-size:14px">⚠️ Dashboard render error.<br/><small>${renderErr.message}</small></p>`;
+      }
+    })
     .catch(err => {
       document.getElementById('loadingScreen').innerHTML =
         `<p style="color:#e74c3c;font-size:14px">⚠️ Could not load data.<br/><small>${err.message}</small></p>`;

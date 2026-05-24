@@ -367,7 +367,15 @@ function renderAll(data) {
 if (typeof IS_ADMIN !== 'undefined' && !IS_ADMIN) {
   fetch(APPS_SCRIPT_URL + '?action=getDashboard')
     .then(r => r.json())
-    .then(data => renderAll(data))
+    .then(data => {
+      try {
+        renderAll(data);
+      } catch(renderErr) {
+        console.error('Render error:', renderErr);
+        document.getElementById('loadingScreen').innerHTML =
+          `<p style="color:#e74c3c;font-size:14px">⚠️ Dashboard render error.<br/><small>${renderErr.message}</small></p>`;
+      }
+    })
     .catch(err => {
       document.getElementById('loadingScreen').innerHTML =
         `<p style="color:#e74c3c;font-size:14px">⚠️ Could not load dashboard data.<br/>Please ensure the Apps Script is deployed and accessible.<br/><br/><small>${err.message}</small></p>`;

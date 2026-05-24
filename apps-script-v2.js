@@ -14,7 +14,7 @@ const HEADERS = [
   'Q5 — Car Parking Slots','Q5 — Bike Parking Slots',
   'Q6 — Greenery Preference','Q7 — Physical Infrastructure',
   'Q8 — Social Infrastructure','Q9 — Building Height',
-  'Q10 — New Members Willing to Add','Q11 — Transit Accommodation',
+  'Q10 — New Members Willing to Add',
   'Q12 — Min. Rent Allowance (₹)','Q13 — Developer Criteria (up to 2)',
   'Q14 — Acceptable Timeline','Q15 — Redevelopment Support (1–5)',
   'Open Feedback'
@@ -24,7 +24,7 @@ const KEYS = [
   'timestamp','owner_name','mobile','email','block','flat_number','flat_id',
   'q1_utilisation','q2_purpose','q3_sqft_preference','q4_bhk_preference',
   'q5_car_slots','q5_bike_slots','q6_greenery','q7_physical_infra',
-  'q8_social_infra','q9_building_height','q10_new_members','q11_transit_pref',
+  'q8_social_infra','q9_building_height','q10_new_members',
   'q12_rent_allowance','q13_developer_criteria','q14_timeline',
   'q15_support_level','feedback'
 ];
