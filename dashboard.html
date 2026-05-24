@@ -6,6 +6,7 @@
 <title>HIG Flats — Community Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -178,7 +179,30 @@ footer strong{color:rgba(255,255,255,0.7)}
     <div class="blocks-container" id="blockGrid"></div>
   </div>
 
-  <!-- UNIT PREFERENCES -->
+  <!-- UNIT PREFERENCES — gated at 80% -->
+  <div id="unitPrefSection">
+
+  <!-- Under construction placeholder shown below 80% -->
+  <div id="unitPrefLocked" style="display:none;text-align:center;padding:48px 24px;background:white;border:1.5px solid var(--border);border-radius:12px;margin-bottom:36px">
+    <div style="font-size:56px;margin-bottom:16px">🏗️</div>
+    <h3 style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--deep);margin-bottom:10px">Unit & Usage Insights — Coming Soon</h3>
+    <p style="font-size:13px;color:var(--muted);max-width:420px;margin:0 auto;line-height:1.8">
+      This section will be unlocked once <strong>80% of flat owners (111 of 138)</strong> have submitted their responses.<br/>
+      Detailed unit preferences, BHK distribution, and area-BHK correlation charts will appear here.
+    </p>
+    <div id="unitPrefProgress" style="margin:20px auto 0;max-width:320px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px">
+        <span>Responses received</span><span id="unitPrefPctLabel">0%</span>
+      </div>
+      <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+        <div id="unitPrefBar" style="height:100%;background:var(--saffron);border-radius:4px;transition:width 0.6s ease;width:0%"></div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px;text-align:center">Target: 80% · <span id="unitPrefRemaining">111</span> more responses needed</div>
+    </div>
+  </div>
+
+  <!-- Actual charts shown at 80%+ -->
+  <div id="unitPrefCharts" style="display:none">
   <div class="sec-hd">
     <h2>🏠 Unit & Usage Preferences</h2>
     <p>What owners envision for their redeveloped flat</p>
@@ -224,6 +248,8 @@ footer strong{color:rgba(255,255,255,0.7)}
     <h3 style="margin-bottom:12px;font-size:13px;font-weight:700">📌 Key Insights</h3>
     <div id="insightsList" style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--muted);line-height:1.6"></div>
   </div>
+  </div><!-- end unitPrefCharts -->
+  </div><!-- end unitPrefSection -->
 
   <!-- PARKING -->
   <div class="sec-hd">
@@ -233,7 +259,7 @@ footer strong{color:rgba(255,255,255,0.7)}
   <div class="sec-divider"></div>
   <div class="parking-grid" id="parkingTotals" style="margin-bottom:12px"></div>
   <div style="background:#fff8f0;border:1.5px solid rgba(224,123,57,0.3);border-radius:8px;padding:12px 16px;margin-bottom:36px;font-size:12px;color:var(--muted);line-height:1.6">
-    ⚠️ <strong>Disclaimer:</strong> Parking totals are indicative and based on responses received so far. Final parking demand summary and per-flat allocation details will be produced once all 138 flat responses are submitted.
+    ⚠️ <strong>Disclaimer:</strong> Averages are indicative based on responses received so far. Final per-flat parking allocation will be confirmed once all 138 responses are submitted.
   </div>
 
   <!-- COMMUNITY DESIGN -->
@@ -351,6 +377,8 @@ Chart.defaults.font.size = 11;
 Chart.defaults.plugins.legend.position = 'bottom';
 Chart.defaults.plugins.legend.labels.padding = 12;
 Chart.defaults.plugins.legend.labels.boxWidth = 12;
+// Register datalabels plugin for bar value labels
+Chart.register(ChartDataLabels);
 
 function makeDoughnut(id, labels, values) {
   new Chart(document.getElementById(id), {
@@ -358,12 +386,15 @@ function makeDoughnut(id, labels, values) {
     data: { labels, datasets: [{ data: values, backgroundColor: PALETTE, borderWidth: 2, borderColor: '#fff' }] },
     options: {
       responsive: true, maintainAspectRatio: false, cutout: '62%',
-      plugins: { tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} (${Math.round(ctx.raw / ctx.dataset.data.reduce((a,b)=>a+b,0) * 100)}%)` } } }
+      plugins: {
+        datalabels: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} (${Math.round(ctx.raw / ctx.dataset.data.reduce((a,b)=>a+b,0) * 100)}%)` } }
+      }
     }
   });
 }
 
-function makeBar(id, labels, values, horizontal=false) {
+function makeBar(id, labels, values, horizontal=false, singleColor=true) {
   new Chart(document.getElementById(id), {
     type: 'bar',
     data: {
@@ -379,11 +410,31 @@ function makeBar(id, labels, values, horizontal=false) {
     options: {
       responsive: true, maintainAspectRatio: false,
       indexAxis: horizontal ? 'y' : 'x',
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: true },
+        datalabels: {
+          display: true,
+          anchor: horizontal ? 'end' : 'end',
+          align: horizontal ? 'end' : 'top',
+          formatter: v => v > 0 ? v : '',
+          font: { weight: '700', size: 11 },
+          color: '#1c2b3a'
+        }
+      },
       scales: {
-        x: { grid: { display: horizontal }, ticks: { maxRotation: 30 } },
-        y: { grid: { color: '#f0ece6' }, ticks: { precision: 0 } }
-      }
+        x: {
+          grid: { display: horizontal },
+          ticks: { display: true, maxRotation: 30 }
+        },
+        y: {
+          display: !horizontal,
+          grid: { color: '#f0ece6' },
+          ticks: { display: false },
+          border: { display: false }
+        }
+      },
+      layout: { padding: { top: horizontal ? 0 : 20, right: horizontal ? 40 : 0 } }
     }
   });
 }
@@ -496,8 +547,24 @@ function renderAll(data) {
   buildStats(rows);
   buildBlockGrid(respondedFlats);
 
+  // ── 80% gate for Unit & Usage Preferences ──
+  const pct80 = Math.round(responded / total * 100);
+  const remaining80 = Math.max(0, Math.ceil(total * 0.8) - responded);
+  document.getElementById('unitPrefPctLabel').textContent = pct80 + '%';
+  document.getElementById('unitPrefBar').style.width = Math.min(pct80 / 80 * 100, 100) + '%';
+  document.getElementById('unitPrefRemaining').textContent = remaining80;
+  if (pct80 >= 80) {
+    document.getElementById('unitPrefLocked').style.display = 'none';
+    document.getElementById('unitPrefCharts').style.display = 'block';
+  } else {
+    document.getElementById('unitPrefLocked').style.display = 'block';
+    document.getElementById('unitPrefCharts').style.display = 'none';
+  }
+
   // Helper
   function cnt(field) { return countField(rows, field); }
+  function cntM(field) { return countMulti(rows, field); }
+  function split(obj) { return [Object.keys(obj), Object.values(obj)]; }
   function cntM(field) { return countMulti(rows, field); }
   function split(obj) { return [Object.keys(obj), Object.values(obj)]; }
 
@@ -547,13 +614,17 @@ function renderAll(data) {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: true, position: 'top' },
+      plugins: {
+        legend: { display: true, position: 'top' },
+        datalabels: { display: false },
         tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw} owners` } }
       },
       scales: {
         x: { grid: { display: false }, stacked: false },
-        y: { grid: { color: '#f0ece6' }, ticks: { precision: 0 }, title: { display: true, text: 'No. of Owners' } }
-      }
+        y: { grid: { color: '#f0ece6' }, ticks: { display: false }, border: { display: false },
+          title: { display: true, text: 'No. of Owners' } }
+      },
+      layout: { padding: { top: 10 } }
     }
   });
 
@@ -589,13 +660,15 @@ function renderAll(data) {
     insightsList.appendChild(div);
   });
 
-  // Parking totals summary only (no charts)
-  const carMap = {'0':0,'1':1,'2':2,'3':3};
-  const totalCar  = rows.reduce((s,r) => s + (carMap[String(r['Q5 — Car Parking Slots']  ?? '').trim()] || 0), 0);
-  const totalBike = rows.reduce((s,r) => s + (carMap[String(r['Q5 — Bike Parking Slots'] ?? '').trim()] || 0), 0);
+  // Parking — average slots per responding flat
+  const carMap2 = {'0':0,'1':1,'2':2,'3':3};
+  const totalCar2  = rows.reduce((s,r) => s + (carMap2[String(r['Q5 — Car Parking Slots']  ?? '').trim()] || 0), 0);
+  const totalBike2 = rows.reduce((s,r) => s + (carMap2[String(r['Q5 — Bike Parking Slots'] ?? '').trim()] || 0), 0);
+  const avgCar  = n > 0 ? (totalCar2  / n).toFixed(2) : '—';
+  const avgBike = n > 0 ? (totalBike2 / n).toFixed(2) : '—';
   document.getElementById('parkingTotals').innerHTML = `
-    <div class="parking-card"><div class="pv">${totalCar}</div><div class="pl">Total Car Slots Requested</div></div>
-    <div class="parking-card"><div class="pv">${totalBike}</div><div class="pl">Total Bike Slots Requested</div></div>`;
+    <div class="parking-card"><div class="pv">${avgCar}</div><div class="pl">Avg Car Slots per Flat</div></div>
+    <div class="parking-card"><div class="pv">${avgBike}</div><div class="pl">Avg Bike Slots per Flat</div></div>`;
 
   // Greenery → doughnut (3 options — suits pie)
   const gc = cnt('Q6 — Greenery Preference');
@@ -666,15 +739,19 @@ function renderAll(data) {
     type: 'bar',
     data: {
       labels: tlOrder.map(k => tlLabels[k]),
-      datasets: [{ data: tlOrder.map(k => tlc[k]||0), backgroundColor: PALETTE, borderRadius: 5, borderSkipped: false }]
+      datasets: [{ data: tlOrder.map(k => tlc[k]||0), backgroundColor: BAR_COLOR, hoverBackgroundColor: BAR_HOVER, borderRadius: 4, borderSkipped: false }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { display: false },
+        datalabels: { display: true, anchor: 'end', align: 'top', formatter: v => v > 0 ? v : '', font: { weight: '700', size: 11 }, color: '#1c2b3a' }
+      },
       scales: {
         x: { type: 'category', grid: { display: false } },
-        y: { grid: { color: '#f0ece6' }, ticks: { precision: 0 }, title: { display: true, text: 'No. of Owners' } }
-      }
+        y: { display: false, ticks: { display: false }, border: { display: false } }
+      },
+      layout: { padding: { top: 24 } }
     }
   });
 
